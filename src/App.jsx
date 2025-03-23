@@ -16,6 +16,10 @@ function App() {
             path="/whatsapp" 
             element={<PrivateRoute component={WhatsappMessageSender} />} 
           />
+          <Route 
+            path="/" 
+            element={<PrivateRoute component={WhatsappMessageSender} />} 
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
