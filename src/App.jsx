@@ -1,28 +1,56 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ConfigProvider } from 'antd'; // Optional: for theme customization
 import Login from './pages/Login';
 import Register from './pages/Register';
-import WhatsappMessageSender from './pages/ConfigureTemplate';
+import ConfigureTemplate from './pages/ConfigureTemplate';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import Layout from './components/Layout'; // New layout component
+import MessageConfigList from './pages/MessageConfig';
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route 
-            path="/whatsapp" 
-            element={<PrivateRoute component={WhatsappMessageSender} />} 
-          />
-          <Route 
-            path="/" 
-            element={<PrivateRoute component={WhatsappMessageSender} />} 
-          />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ConfigProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route 
+              path="/whatsapp" 
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <ConfigureTemplate />
+                  </Layout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/messageConfig" 
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <MessageConfigList />
+                  </Layout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/" 
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    {}
+                  </Layout>
+                </PrivateRoute>
+              } 
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ConfigProvider>
   );
 }
 
