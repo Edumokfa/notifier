@@ -146,15 +146,20 @@ const TemplateManagement = () => {
   };
 
   const handleSubmit = async (values) => {
+    let components = buildComponentsFromForm(currentTemplate);
+    if (components.length === 0 && currentTemplate?.components) {
+      components = currentTemplate.components;
+    }
+  
     const templateData = {
       name: values.name,
       phone_number: values.phone_number,
       key_wpp: values.key_wpp,
       template_wpp: values.template_wpp,
       phone_number_id: values.phone_number_id,
-      components: buildComponentsFromForm(values)
+      components,
     };
-
+  
     setLoading(true);
     try {
       if (currentTemplate) {
@@ -180,7 +185,7 @@ const TemplateManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const buildComponentsFromForm = (values) => {
     const components = [];

@@ -8,6 +8,7 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout'; // New layout component
 import MessageConfigList from './pages/MessageConfig';
+import MessageHistoryDashboard from './pages/MessageHistory';
 
 function App() {
   return (
@@ -33,6 +34,16 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <MessageConfigList />
+                  </Layout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/messageHistory" 
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <MessageHistoryDashboard />
                   </Layout>
                 </PrivateRoute>
               } 

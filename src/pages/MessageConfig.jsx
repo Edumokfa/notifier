@@ -12,6 +12,9 @@ import {
   Tag
 } from 'antd';
 import api from '../api/api';
+import { 
+  EditOutlined, DeleteOutlined 
+} from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -190,8 +193,10 @@ const MessageConfigList = () => {
       render: (_, record) => (
         <Space>
           <Button 
-            type="link" 
+            icon={<EditOutlined />}
+            type="primary" 
             onClick={() => handleEditConfig(record)}
+            ghost
           >
             Editar
           </Button>
@@ -201,7 +206,7 @@ const MessageConfigList = () => {
             okText="Sim"
             cancelText="Não"
           >
-            <Button type="link" danger>
+            <Button type="primary" ghost icon={<DeleteOutlined />} danger>
               Excluir
             </Button>
           </Popconfirm>

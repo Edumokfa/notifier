@@ -1,27 +1,21 @@
 import React, { useState, useContext, useEffect } from 'react';
 import api from '../api/api';
 
-// Criando o contexto de autenticação
 const AuthContext = React.createContext();
 
-// Provider do contexto de autenticação
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Verificar se o usuário já está logado ao carregar a aplicação
   useEffect(() => {
     const checkLoggedIn = async () => {
       if (localStorage.getItem('token')) {
         setLoading(true);
         try {
-          // Adicionar o token ao cabeçalho de todas as requisições
           api.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
-          
           const res = await api.get('/api/auth/me');
-          
           if (res.data.success) {
             setUser(res.data.user);
             setIsAuthenticated(true);
@@ -35,6 +29,8 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(false);
           setUser(null);
         }
+        setLoading(false);
+      } else {
         setLoading(false);
       }
     };

@@ -38,7 +38,12 @@ const AuthenticatedLayout = ({ children }) => {
     {
       key: '/messageConfig',
       icon: <MessageOutlined />,
-      label: <Link to="/messageConfig">Configurar Notificações</Link>
+      label: <Link to="/messageConfig">Configurar</Link>
+    },
+    {
+      key: '/messageHistory',
+      icon: <MessageOutlined />,
+      label: <Link to="/messageHistory">Histórico</Link>
     },
     
   ];

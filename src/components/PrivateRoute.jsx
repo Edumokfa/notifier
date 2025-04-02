@@ -1,21 +1,38 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { Modal, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
-export const PrivateRoute = ({ children, component: Component, ...rest }) => {
+export const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  const navigate = useNavigate();
   
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, loading, navigate]);
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
   
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <Modal
+        open={loading}
+        closable={false}
+        footer={null}
+        centered
+        maskClosable={false}
+        styles={{
+          body: { 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            padding: '30px'
+          }
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <Spin indicator={antIcon} size="large" />
+          <p style={{ marginTop: 16 }}>Carregando...</p>
+        </div>
+      </Modal>
+    );
   }
-  
+
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
