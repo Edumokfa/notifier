@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Space, Badge, Typography, Tag, Button, Drawer, Spin, notification } from 'antd';
-import { EyeOutlined, CalendarOutlined } from '@ant-design/icons';
-import ReactJson from 'react-json-view';
+import { 
+  Table, Button, Space, Card, Badge, Typography, Tag, 
+  Drawer, Spin, notification, Divider, Row, Col
+} from 'antd';
+import { 
+  EyeOutlined, CalendarOutlined, WhatsAppOutlined,
+  ReloadOutlined, CloseOutlined
+} from '@ant-design/icons';
+import ReactJsonPretty from 'react-json-pretty';
 import api from '../api/api';
 
 const { Title, Text } = Typography;
@@ -94,12 +100,13 @@ const MessageHistoryDashboard = () => {
       filters: [
         { text: 'Entregue', value: 'delivered' },
         { text: 'Enviado', value: 'sent' },
+        { text: 'Lido', value: 'read' },
         { text: 'Falha', value: 'failed' },
       ],
       onFilter: (value, record) => record.messageStatus?.toLowerCase().includes(value),
     },
     {
-      title: 'Código',
+      title: 'Response Code',
       dataIndex: 'statusCode',
       key: 'statusCode',
       render: (statusCode) => {
@@ -114,111 +121,126 @@ const MessageHistoryDashboard = () => {
       title: 'Ações',
       key: 'actions',
       render: (_, record) => (
-        <Button 
-          type="primary" 
-          icon={<EyeOutlined />} 
-          onClick={() => showDrawer(record)}
-          size="small"
-        >
-          Detalhes
-        </Button>
+        <Space>
+          <Button 
+            type="primary" 
+            icon={<EyeOutlined />} 
+            onClick={() => showDrawer(record)}
+            ghost
+          >
+            Detalhes
+          </Button>
+        </Space>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '24px' }}>
       <Card>
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>Histórico de Mensagens</Title>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <Title level={2}>
+            <WhatsAppOutlined style={{ marginRight: '8px', color: '#25D366' }} />
+            Histórico de Mensagens
+          </Title>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={fetchData}
+          >
+            Atualizar
+          </Button>
+        </div>
           
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px' }}>
-              <Spin size="large" />
-            </div>
-          ) : (
-            <Table 
-              dataSource={filteredHistory} 
-              columns={columns} 
-              rowKey="id"
-              pagination={{ 
-                pageSize: 10, 
-                showSizeChanger: true, 
-                pageSizeOptions: ['10', '20', '50', '100'],
-                showTotal: (total) => `Total: ${total} registros` 
-              }}
-              locale={{ emptyText: 'Nenhum registro encontrado' }}
-            />
-          )}
-        </Space>
+        <Spin spinning={loading}>
+          <Table 
+            dataSource={filteredHistory} 
+            columns={columns} 
+            rowKey="id"
+            pagination={{ 
+              pageSize: 10, 
+              showTotal: (total) => `Total: ${total} registros` 
+            }}
+            locale={{ emptyText: 'Nenhum registro encontrado' }}
+          />
+        </Spin>
       </Card>
 
       <Drawer
-        title="Detalhes da Mensagem"
+        title={
+          <Space>
+            <WhatsAppOutlined style={{ color: '#25D366' }} />
+            Detalhes da Mensagem
+          </Space>
+        }
         placement="right"
         width={600}
         onClose={closeDrawer}
-        visible={drawerVisible}
+        open={drawerVisible}
         extra={
-          <Space>
-            <Button onClick={closeDrawer}>Fechar</Button>
-          </Space>
+          <Button onClick={closeDrawer} icon={<CloseOutlined />}>
+            Fechar
+          </Button>
         }
       >
         {selectedRecord && (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <div>
-              <Text strong>ID: </Text>
-              <Text>{selectedRecord.id}</Text>
-            </div>
+            <Row gutter={16}>
+              <Col span={12}>
+                <div>
+                  <Text strong>ID: </Text>
+                  <Text>{selectedRecord.id}</Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div>
+                  <Text strong>Telefone: </Text>
+                  <Text>{selectedRecord.phoneNumber}</Text>
+                </div>
+              </Col>
+            </Row>
             
-            <div>
-              <Text strong>Telefone: </Text>
-              <Text>{selectedRecord.phoneNumber}</Text>
-            </div>
-            
-            <div>
-              <Text strong>Status da Mensagem: </Text>
-              {getStatusBadge(selectedRecord.messageStatus, selectedRecord.statusCode)}
-            </div>
-            
-            <div>
-              <Text strong>Código de Status: </Text>
-              <Tag color={selectedRecord.statusCode < 400 ? 'green' : 'red'}>
-                {selectedRecord.statusCode}
-              </Tag>
-            </div>
+            <Row gutter={16}>
+              <Col span={12}>
+                <div>
+                  <Text strong>Status da Mensagem: </Text>
+                  {getStatusBadge(selectedRecord.messageStatus, selectedRecord.statusCode)}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div>
+                  <Text strong>Código de Status: </Text>
+                  <Tag color={selectedRecord.statusCode < 400 ? 'green' : 'red'}>
+                    {selectedRecord.statusCode}
+                  </Tag>
+                </div>
+              </Col>
+            </Row>
             
             <div>
               <Text strong>Data de Criação: </Text>
               <Text>{formatDate(selectedRecord.createdAt)}</Text>
             </div>
             
-            <div>
-              <Text strong>Dados da Requisição:</Text>
-              <Card size="small" style={{ marginTop: 10 }}>
-                <ReactJson 
-                  src={selectedRecord.requestPayload} 
-                  collapsed={2}
-                  displayDataTypes={false}
-                  enableClipboard={false}
-                />
-              </Card>
-            </div>
+            <Divider orientation="left">Dados da Requisição</Divider>
+            <Card size="small" style={{ marginTop: 10 }}>
+              <ReactJsonPretty 
+                data={selectedRecord.requestPayload} 
+                collapsed={2}
+                displayDataTypes={false}
+                enableClipboard={false}
+              />
+            </Card>
             
-            <div>
-              <Text strong>Dados da Resposta:</Text>
-              <Card size="small" style={{ marginTop: 10 }}>
-                <ReactJson 
-                  src={selectedRecord.responsePayload} 
-                  collapsed={2}
-                  displayDataTypes={false}
-                  enableClipboard={false}
-                />
-              </Card>
-            </div>
+            <Divider orientation="left">Dados da Resposta</Divider>
+            <Card size="small" style={{ marginTop: 10 }}>
+              <ReactJsonPretty  
+                data={selectedRecord.responsePayload} 
+                collapsed={2}
+                displayDataTypes={false}
+                enableClipboard={false}
+              />
+            </Card>
           </Space>
         )}
       </Drawer>

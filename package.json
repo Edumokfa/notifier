@@ -9,9 +9,10 @@
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.24.3",
     "axios": "^1.8.4",
+    "papaparse": "^5.5.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-json-view": "^1.21.3",
+    "react-json-pretty": "^2.2.0",
     "react-router-dom": "^7.4.0",
     "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"

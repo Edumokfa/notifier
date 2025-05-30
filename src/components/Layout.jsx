@@ -6,6 +6,10 @@ import {
   UserOutlined,
   MessageOutlined,
   LogoutOutlined,
+  HistoryOutlined,
+  ContactsOutlined,
+  SettingOutlined,
+  HomeOutlined
 } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext'; // Adjust import path as needed
@@ -27,7 +31,7 @@ const AuthenticatedLayout = ({ children }) => {
   const menuItems = [
     {
       key: '/',
-      icon: <MessageOutlined />,
+      icon: <HomeOutlined />,
       label: <Link to="/">Home</Link>
     },
     {
@@ -37,13 +41,18 @@ const AuthenticatedLayout = ({ children }) => {
     },
     {
       key: '/messageConfig',
-      icon: <MessageOutlined />,
+      icon: <SettingOutlined />,
       label: <Link to="/messageConfig">Configurar</Link>
     },
     {
       key: '/messageHistory',
-      icon: <MessageOutlined />,
+      icon: <HistoryOutlined />,
       label: <Link to="/messageHistory">Histórico</Link>
+    },
+    {
+      key: '/contacts',
+      icon: <ContactsOutlined />,
+      label: <Link to="/contacts">Contatos</Link>
     },
     
   ];

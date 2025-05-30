@@ -9,6 +9,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout'; // New layout component
 import MessageConfigList from './pages/MessageConfig';
 import MessageHistoryDashboard from './pages/MessageHistory';
+import ContactList from './pages/Contacts';
 
 function App() {
   return (
@@ -44,6 +45,16 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <MessageHistoryDashboard />
+                  </Layout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/contacts" 
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <ContactList />
                   </Layout>
                 </PrivateRoute>
               } 
