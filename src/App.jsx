@@ -4,6 +4,7 @@ import { ConfigProvider } from 'antd'; // Optional: for theme customization
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ConfigureTemplate from './pages/ConfigureTemplate';
+import UserManagement from './pages/UserManagement';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout'; // New layout component
@@ -22,7 +23,7 @@ function App() {
             <Route 
               path="/whatsapp" 
               element={
-                <PrivateRoute>
+                <PrivateRoute requiredRole="admin">
                   <Layout>
                     <ConfigureTemplate />
                   </Layout>
@@ -32,7 +33,7 @@ function App() {
             <Route 
               path="/messageConfig" 
               element={
-                <PrivateRoute>
+                <PrivateRoute requiredRole="admin">
                   <Layout>
                     <MessageConfigList />
                   </Layout>
@@ -55,6 +56,16 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <ContactList />
+                  </Layout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/userManagement" 
+              element={
+                <PrivateRoute requiredRole="admin">
+                  <Layout>
+                    <UserManagement />
                   </Layout>
                 </PrivateRoute>
               } 

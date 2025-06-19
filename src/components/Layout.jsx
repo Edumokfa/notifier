@@ -28,7 +28,7 @@ const AuthenticatedLayout = ({ children }) => {
     navigate('/login');
   };
 
-  const menuItems = [
+  const fullMenuItems = [
     {
       key: '/',
       icon: <HomeOutlined />,
@@ -37,12 +37,14 @@ const AuthenticatedLayout = ({ children }) => {
     {
       key: '/whatsapp',
       icon: <MessageOutlined />,
-      label: <Link to="/whatsapp">Templates</Link>
+      label: <Link to="/whatsapp">Templates</Link>,
+      roles: ['admin']  // <-- Só Admin
     },
     {
       key: '/messageConfig',
       icon: <SettingOutlined />,
-      label: <Link to="/messageConfig">Configurar</Link>
+      label: <Link to="/messageConfig">Configurar</Link>,
+      roles: ['admin']  // <-- Só Admin
     },
     {
       key: '/messageHistory',
@@ -54,16 +56,28 @@ const AuthenticatedLayout = ({ children }) => {
       icon: <ContactsOutlined />,
       label: <Link to="/contacts">Contatos</Link>
     },
-    
+    {
+      key: '/userManagement',
+      icon: <UserOutlined />,
+      label: <Link to="/userManagement">Gerenciar Usuarios</Link>
+    },
   ];
+  
+  const menuItems = fullMenuItems.filter(item => {
+    if (!item.roles) return true;
+    return item.roles.includes(user.role);
+  });
+  
 
-  const userMenu = (
-    <Menu>
-      <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
-        Sair
-      </Menu.Item>
-    </Menu>
-  );
+  const userMenu = {
+    items: [
+      {
+        key: 'logout',
+        icon: <LogoutOutlined />,
+        label: <span onClick={handleLogout}>Sair</span>,
+      },
+    ],
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -109,12 +123,14 @@ const AuthenticatedLayout = ({ children }) => {
             <Text style={{ marginRight: 12 }}>
               {user?.name || 'Usuário'}
             </Text>
-            <Dropdown overlay={userMenu} placement="bottomRight">
-              <Avatar 
-                icon={<UserOutlined />} 
-                style={{ cursor: 'pointer' }} 
-                src={user?.avatar} 
-              />
+            <Dropdown menu={userMenu} placement="bottomRight">
+              <span>
+                <Avatar 
+                  icon={<UserOutlined />} 
+                  style={{ cursor: 'pointer' }} 
+                  src={user?.avatar} 
+                />
+              </span>
             </Dropdown>
           </div>
         </Header>

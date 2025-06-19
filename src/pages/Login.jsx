@@ -49,9 +49,6 @@ const Login = () => {
           <Title level={2}>Login</Title>
         </div>
         
-        {message && <Alert message={message} type="error" showIcon style={{ marginBottom: 16 }} />}
-        {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
-        
         <Form
           form={form}
           name="login"

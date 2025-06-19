@@ -35,7 +35,7 @@ const Register = () => {
     const result = await register(userData);
     
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/');
     } else {
       setMessage(result.message || 'Erro ao registrar');
     }
@@ -59,9 +59,6 @@ const Register = () => {
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <Title level={2}>Registre-se</Title>
         </div>
-        
-        {message && <Alert message={message} type="error" showIcon style={{ marginBottom: 16 }} />}
-        {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
         
         <Form
           form={form}
