@@ -255,7 +255,7 @@ const MessageConfigList = () => {
         const typeMap = {
           'whatsapp': 'WhatsApp',
           'email': 'E-mail',
-          'sms': 'SMS'
+          //'sms': 'SMS'
         };
         return typeMap[type] || type;
       }
@@ -412,7 +412,6 @@ const MessageConfigList = () => {
                   <Select placeholder="Selecione o canal">
                     <Option value="whatsapp">WhatsApp</Option>
                     <Option value="email">E-mail</Option>
-                    <Option value="sms">SMS</Option>
                   </Select>
                 </Form.Item>
               </Col>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Space, Card, Badge, Typography, Tag, 
-  Drawer, Spin, notification, Divider, Row, Col
+  Drawer, Spin, notification, Divider, Row, Col, Input
 } from 'antd';
 import { 
   EyeOutlined, CalendarOutlined, WhatsAppOutlined,
-  ReloadOutlined, CloseOutlined
+  ReloadOutlined, CloseOutlined, MailOutlined, SearchOutlined
 } from '@ant-design/icons';
 import ReactJsonPretty from 'react-json-pretty';
 import api from '../api/api';
@@ -68,6 +68,56 @@ const MessageHistoryDashboard = () => {
     }
   };
 
+  const getChannelIcon = (channelType) => {
+    if (channelType?.toLowerCase() === 'whatsapp') {
+      return <WhatsAppOutlined style={{ color: '#25D366' }} />;
+    } else if (channelType?.toLowerCase() === 'email') {
+      return <MailOutlined style={{ color: '#1890ff' }} />;
+    }
+    return null;
+  };
+
+  const getChannelTag = (channelType) => {
+    if (channelType?.toLowerCase() === 'whatsapp') {
+      return <Tag color="green" icon={<WhatsAppOutlined />}>WhatsApp</Tag>;
+    } else if (channelType?.toLowerCase() === 'email') {
+      return <Tag color="blue" icon={<MailOutlined />}>Email</Tag>;
+    }
+    return <Tag color="default">{channelType || 'Desconhecido'}</Tag>;
+  };
+
+  const getSearchProps = (dataIndex, placeholder) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          placeholder={placeholder}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => confirm()}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => confirm()}
+            icon={<SearchOutlined />}
+            size="small"
+          >
+            Buscar
+          </Button>
+          <Button onClick={() => clearFilters()} size="small">
+            Limpar
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+    onFilter: (value, record) =>
+      record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '',
+  });
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString('pt-BR');
@@ -88,9 +138,21 @@ const MessageHistoryDashboard = () => {
       defaultSortOrder: 'descend',
     },
     {
-      title: 'Telefone',
-      dataIndex: 'phoneNumber',
-      key: 'phoneNumber',
+      title: 'Contato',
+      dataIndex: 'contact',
+      key: 'contact',
+      ...getSearchProps('contact', 'Buscar por contato'),
+    },
+    {
+      title: 'Canal',
+      dataIndex: 'channelType',
+      key: 'channelType',
+      render: (channelType) => getChannelTag(channelType),
+      filters: [
+        { text: 'WhatsApp', value: 'whatsapp' },
+        { text: 'Email', value: 'email' },
+      ],
+      onFilter: (value, record) => record.channelType?.toLowerCase() === value,
     },
     {
       title: 'Status',
@@ -116,6 +178,7 @@ const MessageHistoryDashboard = () => {
         
         return <Tag color={color}>{statusCode}</Tag>;
       },
+      ...getSearchProps('statusCode', 'Buscar por código'),
     },
     {
       title: 'Ações',
@@ -194,8 +257,8 @@ const MessageHistoryDashboard = () => {
               </Col>
               <Col span={12}>
                 <div>
-                  <Text strong>Telefone: </Text>
-                  <Text>{selectedRecord.phoneNumber}</Text>
+                  <Text strong>Contato: </Text>
+                  <Text>{selectedRecord.contact}</Text>
                 </div>
               </Col>
             </Row>
@@ -203,10 +266,19 @@ const MessageHistoryDashboard = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <div>
+                  <Text strong>Canal: </Text>
+                  {getChannelTag(selectedRecord.channelType)}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div>
                   <Text strong>Status da Mensagem: </Text>
                   {getStatusBadge(selectedRecord.messageStatus, selectedRecord.statusCode)}
                 </div>
               </Col>
+            </Row>
+            
+            <Row gutter={16}>
               <Col span={12}>
                 <div>
                   <Text strong>Código de Status: </Text>
@@ -215,12 +287,13 @@ const MessageHistoryDashboard = () => {
                   </Tag>
                 </div>
               </Col>
+              <Col span={12}>
+                <div>
+                  <Text strong>Data de Criação: </Text>
+                  <Text>{formatDate(selectedRecord.createdAt)}</Text>
+                </div>
+              </Col>
             </Row>
-            
-            <div>
-              <Text strong>Data de Criação: </Text>
-              <Text>{formatDate(selectedRecord.createdAt)}</Text>
-            </div>
             
             <Divider orientation="left">Dados da Requisição</Divider>
             <Card size="small" style={{ marginTop: 10 }}>
