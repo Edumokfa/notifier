@@ -68,15 +68,6 @@ const MessageHistoryDashboard = () => {
     }
   };
 
-  const getChannelIcon = (channelType) => {
-    if (channelType?.toLowerCase() === 'whatsapp') {
-      return <WhatsAppOutlined style={{ color: '#25D366' }} />;
-    } else if (channelType?.toLowerCase() === 'email') {
-      return <MailOutlined style={{ color: '#1890ff' }} />;
-    }
-    return null;
-  };
-
   const getChannelTag = (channelType) => {
     if (channelType?.toLowerCase() === 'whatsapp') {
       return <Tag color="green" icon={<WhatsAppOutlined />}>WhatsApp</Tag>;

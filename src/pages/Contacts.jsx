@@ -7,12 +7,12 @@ import {
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, 
   SaveOutlined, CloseOutlined, UserOutlined,
-  ImportOutlined, ExportOutlined
+  ImportOutlined
 } from '@ant-design/icons';
 import api from '../api/api';
 import Papa from 'papaparse';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const ContactList = () => {
   const [contacts, setContacts] = useState([]);

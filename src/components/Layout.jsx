@@ -99,7 +99,7 @@ const AuthenticatedLayout = ({ children }) => {
             fontWeight: 'bold'
           }}
         >
-          {collapsed ? 'Notifier' : 'Notifier'}
+          {collapsed ? 'Notificações' : 'Notificações'}
         </div>
         <Menu 
           theme="dark" 

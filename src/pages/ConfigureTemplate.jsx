@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Space, Card, 
   notification, Popconfirm, Tabs, Typography, 
-  Spin, Divider, Select, Row, Col
+  Spin, Divider, Select, Row, Col, Tag
 } from 'antd';
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, 
   SaveOutlined, CloseOutlined, WhatsAppOutlined,
-  PlayCircleOutlined, EyeOutlined
+  EyeOutlined, MailOutlined
 } from '@ant-design/icons';
 import api from '../api/api';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -24,6 +26,7 @@ const TemplateManagement = () => {
   const [componentsCount, setComponentsCount] = useState(1);
   const [formUpdate, setFormUpdate] = useState(0);
   const [parametersCount, setParametersCount] = useState({});
+  const [templateType, setTemplateType] = useState('whatsapp'); // 'whatsapp' ou 'email'
   
   const [formValues, setFormValues] = useState({});
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -53,8 +56,9 @@ const TemplateManagement = () => {
 
   const handleCreate = () => {
     setCurrentTemplate(null);
-    setComponentsCount(1);
+    setComponentsCount(0);
     setParametersCount({});
+    setTemplateType('whatsapp');
     form.resetFields();
     setFormValues({});
     setFormVisible(true);
@@ -62,6 +66,7 @@ const TemplateManagement = () => {
 
   const handleEdit = (record) => {
     setCurrentTemplate(record);
+    setTemplateType(record.type || 'whatsapp');
     
     const paramCounts = {};
     if (record.components && Array.isArray(record.components)) {
@@ -71,45 +76,45 @@ const TemplateManagement = () => {
         }
       });
     }
-    setParametersCount(paramCounts);
+    
+    if (record.type === 'whatsapp') {
+      const paramCounts = {};
+      record.components?.forEach((component, idx) => {
+        if (Array.isArray(component.parameters)) {
+          paramCounts[idx] = component.parameters.length;
+        }
+      });
+      setParametersCount(paramCounts);
+    } else {
+      setParametersCount({});
+    }
+      
     
     const formData = {
       name: record.name,
+      type: record.type || 'whatsapp',
       phone_number: record.phone_number,
       key_wpp: record.key_wpp,
       template_wpp: record.template_wpp,
       phone_number_id: record.phone_number_id,
+      email_subject: record.email_subject,
+      email_body: record.email_body,
       ...extractComponentsForForm(record.components)
     };
     
     form.setFieldsValue(formData);
     setFormValues(formData);
     
-    if (record.components) {
+    if (record.type === 'whatsapp' && record.components) {
       setComponentsCount(record.components.length);
     }
     
     setFormVisible(true);
   };
 
-  const handleTest = async (record) => {
-    record.phone_number = '555484043307'
-    try{
-      await api.post('/api/whatsapp/sendFirstMessage', record);
-        notification.success({
-          message: 'Sucesso',
-          description: 'Mensagem enviada com sucesso!',
-      });
-    } catch (err) {
-      notification.error({
-        message: 'Erro',
-        description: 'Falha ao enviar mensagem: ' + 
-          (err?.response?.data?.error?.details?.error?.message || err?.message || 'Erro desconhecido'),
-      });
-    }
-  };
-
   const extractComponentsForForm = (components) => {
+    if (templateType !== 'whatsapp') return null;
+    console.log('não fez nada')
     const formValues = {};
     
     if (components && Array.isArray(components)) {
@@ -146,17 +151,25 @@ const TemplateManagement = () => {
   };
 
   const handleSubmit = async (values) => {
-    let components = buildComponentsFromForm(currentTemplate);
-    if (components.length === 0 && currentTemplate?.components) {
-      components = currentTemplate.components;
+    let components = [];
+    
+    if (values.type === 'whatsapp') {
+      components = buildComponentsFromForm(values);
+      if (components.length === 0 && currentTemplate?.components) {
+        components = currentTemplate.components;
+      }
     }
   
     const templateData = {
       name: values.name,
+      type: values.type,
       phone_number: values.phone_number,
       key_wpp: values.key_wpp,
       template_wpp: values.template_wpp,
       phone_number_id: values.phone_number_id,
+      // Campos de email
+      email_subject: values.email_subject,
+      email_body: values.email_body,
       components,
     };
   
@@ -257,6 +270,77 @@ const TemplateManagement = () => {
     return previewText;
   };
 
+  const renderFullPreview = () => {
+    if (!currentTemplate) return null;
+  
+    if (currentTemplate.type === 'email') {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div style={{ maxWidth: '700px', margin: '0 auto', border: '1px solid #d9d9d9', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ backgroundColor: '#1890ff', color: 'white', padding: '16px', textAlign: 'center' }}>
+              <MailOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Preview do Email</span>
+            </div>
+            <div style={{ backgroundColor: '#f9f9f9', padding: '20px', minHeight: '300px' }}>
+              <h2>{currentTemplate.email_subject}</h2>
+              <div
+                dangerouslySetInnerHTML={{ __html: currentTemplate.email_body || "<i>Sem conteúdo</i>" }}
+                style={{ backgroundColor: '#fff', padding: '16px', borderRadius: '6px', border: '1px solid #e0e0e0' }}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+  
+    // WhatsApp preview (mantido original)
+    if (!currentTemplate.components) return null;
+  
+    return (
+      <div style={{ padding: '20px' }}>
+        <div style={{ maxWidth: '400px', margin: '0 auto', border: '1px solid #d9d9d9', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ backgroundColor: '#128C7E', color: 'white', padding: '16px', textAlign: 'center' }}>
+            <WhatsAppOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
+            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Preview da Mensagem</span>
+          </div>
+          <div style={{ backgroundColor: '#E5DDD5', padding: '20px', minHeight: '300px' }}>
+            {currentTemplate.components.map((component, index) => {
+              let content = component.text || '';
+              if (component.parameters && Array.isArray(component.parameters)) {
+                component.parameters.forEach((param, paramIndex) => {
+                  const paramValue = param.text || `[Parâmetro ${paramIndex + 1}]`;
+                  content = content.replace(`{{${paramIndex + 1}}}`, paramValue);
+                });
+              }
+  
+              const styles = {
+                padding: '12px 16px',
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                marginBottom: '12px',
+              };
+  
+              if (component.type === 'header') {
+                styles.fontWeight = 'bold';
+              } else if (component.type === 'footer') {
+                styles.fontSize = '12px';
+                styles.color = '#666';
+              }
+  
+              return (
+                <div key={`preview-component-${index}`} style={styles}>
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+
   const columns = [
     {
       title: 'Nome',
@@ -264,9 +348,21 @@ const TemplateManagement = () => {
       key: 'name',
     },
     {
-      title: 'Template WhatsApp',
-      dataIndex: 'template_wpp',
-      key: 'template_wpp',
+      title: 'Tipo',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type) => (
+        <Tag color={type === 'email' ? 'blue' : 'green'} icon={type === 'email' ? <MailOutlined /> : <WhatsAppOutlined />}>
+          {type === 'email' ? 'Email' : 'WhatsApp'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Template/Assunto',
+      key: 'template_info',
+      render: (_, record) => (
+        <Text>{record.type === 'email' ? record.email_subject : record.template_wpp}</Text>
+      ),
     },
     {
       title: 'Ações',
@@ -290,14 +386,6 @@ const TemplateManagement = () => {
           >
             Preview
           </Button>
-          <Button
-            icon={<PlayCircleOutlined />}
-            onClick={() => handleTest(record)}
-            type="primary"
-            ghost
-          >
-            Testar
-          </Button>
           <Popconfirm
             title="Tem certeza que deseja excluir este template?"
             onConfirm={() => handleDelete(record.id)}
@@ -317,7 +405,6 @@ const TemplateManagement = () => {
     const parameterItems = [];
     const paramCount = parametersCount[componentIndex] || 0;
     
-    // Renderizar campos de parâmetros com base na contagem armazenada
     for (let i = 0; i < paramCount; i++) {
       parameterItems.push(
         <div key={`param-${componentIndex}-${i}`} style={{ marginBottom: '16px', border: '1px dashed #d9d9d9', padding: '16px', borderRadius: '8px' }}>
@@ -332,8 +419,6 @@ const TemplateManagement = () => {
                 <Select placeholder="Selecione o tipo do parâmetro">
                   <Option value="text">Texto</Option>
                   <Option value="contact">Nome do Contato</Option>
-                  <Option value="image">Imagem</Option>
-                  <Option value="video">Vídeo</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -444,108 +529,118 @@ const TemplateManagement = () => {
     );
   };
 
-  const renderFullPreview = () => {
-    if (!currentTemplate || !currentTemplate.components) return null;
-    
-    return (
-      <div style={{ padding: '20px' }}>
-        <div style={{ maxWidth: '400px', margin: '0 auto', border: '1px solid #d9d9d9', borderRadius: '8px', overflow: 'hidden' }}>
-          <div style={{ backgroundColor: '#128C7E', color: 'white', padding: '16px', textAlign: 'center' }}>
-            <WhatsAppOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
-            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Preview da Mensagem</span>
-          </div>
-          <div style={{ backgroundColor: '#E5DDD5', padding: '20px', minHeight: '300px' }}>
-            {currentTemplate.components.map((component, index) => {
-              let content = component.text || '';
-              
-              if (component.parameters && Array.isArray(component.parameters)) {
-                component.parameters.forEach((param, paramIndex) => {
-                  const paramValue = param.text || `[Parâmetro ${paramIndex + 1}]`;
-                  content = content.replace(`{{${paramIndex + 1}}}`, paramValue);
-                });
-              }
-              
-              const styles = {
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                marginBottom: '12px',
-              };
-              
-              if (component.type === 'header') {
-                styles.fontWeight = 'bold';
-              } else if (component.type === 'footer') {
-                styles.fontSize = '12px';
-                styles.color = '#666';
-              }
-              
-              return (
-                <div key={`preview-component-${index}`} style={styles}>
-                  {content}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
-  const tabItems = [
-    {
-      key: "1",
-      label: "Informações Básicas",
-      children: (
-        <>
-          <Form.Item
-            label="Nome"
-            name="name"
-            rules={[{ required: true, message: 'Por favor informe o nome do template!' }]}
-          >
-            <Input placeholder="Nome do template" />
-          </Form.Item>
-          
-          <Form.Item
-            label="API Key WhatsApp"
-            name="key_wpp"
-            rules={[{ required: true, message: 'Por favor informe a chave de API do WhatsApp!' }]}
-          >
-            <TextArea placeholder="Chave de API do WhatsApp" autoSize={{ minRows: 2, maxRows: 4 }} />
-          </Form.Item>
-          
-          <Form.Item
-            label="Template WhatsApp"
-            name="template_wpp"
-            rules={[{ required: true, message: 'Por favor informe o nome do template no WhatsApp!' }]}
-          >
-            <Input placeholder="Nome do template no WhatsApp" />
-          </Form.Item>
-          
-          <Form.Item
-            label="ID do Número de Telefone"
-            name="phone_number_id"
-            rules={[{ required: true, message: 'Por favor informe o ID do número de telefone!' }]}
-          >
-            <Input placeholder="ID do número de telefone" />
-          </Form.Item>
-        </>
-      )
-    },
-    {
-      key: "2",
-      label: "Componentes",
-      children: (
-        <>
-          <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>
-            {'Configure os componentes do template como cabeçalho, corpo e rodapé. Use a sintaxe {{1}}, {{2}}, etc. para marcar onde os parâmetros serão inseridos.'}
-          </Text>
-          
-          {renderComponentsForms()}
-        </>
-      )
+  const getTabItems = () => {
+    const items = [
+      {
+        key: "1",
+        label: "Informações Básicas",
+        children: (
+          <>
+            <Form.Item
+              label="Nome"
+              name="name"
+              rules={[{ required: true, message: 'Por favor informe o nome do template!' }]}
+            >
+              <Input placeholder="Nome do template" />
+            </Form.Item>
+            
+            <Form.Item
+              label="Tipo de Template"
+              name="type"
+              rules={[{ required: true, message: 'Por favor selecione o tipo do template!' }]}
+            >
+              <Select 
+                placeholder="Selecione o tipo do template"
+                onChange={(value) => setTemplateType(value)}
+              >
+                <Option value="whatsapp">
+                  <WhatsAppOutlined style={{ marginRight: '8px', color: '#25D366' }} />
+                  WhatsApp
+                </Option>
+                <Option value="email">
+                  <MailOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                  Email
+                </Option>
+              </Select>
+            </Form.Item>
+
+            {/* Campos do WhatsApp */}
+            {templateType === 'whatsapp' && (
+              <>
+                <Form.Item
+                  label="API Key WhatsApp"
+                  name="key_wpp"
+                  rules={[{ required: true, message: 'Por favor informe a chave de API do WhatsApp!' }]}
+                >
+                  <TextArea placeholder="Chave de API do WhatsApp" autoSize={{ minRows: 2, maxRows: 4 }} />
+                </Form.Item>
+                
+                <Form.Item
+                  label="Template WhatsApp"
+                  name="template_wpp"
+                  rules={[{ required: true, message: 'Por favor informe o nome do template no WhatsApp!' }]}
+                >
+                  <Input placeholder="Nome do template no WhatsApp" />
+                </Form.Item>
+                
+                <Form.Item
+                  label="ID do Número de Telefone"
+                  name="phone_number_id"
+                  rules={[{ required: true, message: 'Por favor informe o ID do número de telefone!' }]}
+                >
+                  <Input placeholder="ID do número de telefone" />
+                </Form.Item>
+              </>
+            )}
+
+            {/* Campos do Email */}
+            {templateType === 'email' && (
+              <>
+                <Form.Item
+                  label="Assunto do Email"
+                  name="email_subject"
+                  rules={[{ required: true, message: 'Por favor informe o assunto do email!' }]}
+                >
+                  <Input placeholder="Assunto do email" />
+                </Form.Item>
+                
+                <Form.Item
+                  label="Corpo do Email"
+                  name="email_body"
+                  rules={[{ required: true, message: 'Por favor informe o corpo do email!' }]}
+                >
+                  <ReactQuill
+                    value={form.getFieldValue('email_body')}
+                    onChange={(value) => form.setFieldsValue({ email_body: value })}
+                  />
+                </Form.Item>
+              </>
+            )}
+          </>
+        )
+      }
+    ];
+
+    // Adicionar aba de componentes apenas para WhatsApp
+    if (templateType === 'whatsapp') {
+      items.push({
+        key: "2",
+        label: "Componentes",
+        children: (
+          <>
+            <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>
+              {'Configure os componentes do template como cabeçalho, corpo e rodapé. Use a sintaxe {{1}}, {{2}}, etc. para marcar onde os parâmetros serão inseridos.'}
+            </Text>
+            
+            {renderComponentsForms()}
+          </>
+        )
+      });
     }
-  ];
+
+    return items;
+  };
   
   const modalFooter = [
     <Button key="cancel" onClick={() => setFormVisible(false)} icon={<CloseOutlined />}>
@@ -566,8 +661,11 @@ const TemplateManagement = () => {
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
           <Title level={2}>
-            <WhatsAppOutlined style={{ marginRight: '8px', color: '#25D366' }} />
-            Gerenciamento de Templates
+            <Space>
+              <WhatsAppOutlined style={{ color: '#25D366' }} />
+              <MailOutlined style={{ color: '#1890ff' }} />
+              Gerenciamento de Templates
+            </Space>
           </Title>
           <Button
             type="primary"
@@ -601,7 +699,7 @@ const TemplateManagement = () => {
           onFinish={handleSubmit}
           onValuesChange={handleFormValuesChange}
         >
-          <Tabs defaultActiveKey="1" items={tabItems} />
+          <Tabs defaultActiveKey="1" items={getTabItems()} />
         </Form>
       </Modal>
 
@@ -609,6 +707,7 @@ const TemplateManagement = () => {
         title="Preview do Template"
         open={previewVisible}
         onCancel={() => setPreviewVisible(false)}
+        width={currentTemplate?.type === 'email' ? 700 : 500}
         footer={[
           <Button key="close" onClick={() => setPreviewVisible(false)}>
             Fechar

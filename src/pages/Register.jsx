@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Form, Input, Button, Card, Alert, Typography, Space } from 'antd';
+import { Form, Input, Button, Card, Typography, Space } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 
 const { Title, Text, Link } = Typography;
@@ -10,7 +10,7 @@ const Register = () => {
   const [form] = Form.useForm();
   const [message, setMessage] = useState('');
   
-  const { register, error, loading } = useAuth();
+  const { register, loading } = useAuth();
   const navigate = useNavigate();
   
   const onFinish = async (values) => {

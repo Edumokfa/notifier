@@ -11,6 +11,7 @@ import Layout from './components/Layout'; // New layout component
 import MessageConfigList from './pages/MessageConfig';
 import MessageHistoryDashboard from './pages/MessageHistory';
 import ContactList from './pages/Contacts';
+import MessageAnalytics from './pages/MessageAnalytics';
 
 function App() {
   return (
@@ -75,7 +76,7 @@ function App() {
               element={
                 <PrivateRoute>
                   <Layout>
-                    {}
+                    <MessageAnalytics />
                   </Layout>
                 </PrivateRoute>
               } 

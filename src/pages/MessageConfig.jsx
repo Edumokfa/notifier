@@ -7,12 +7,11 @@ import {
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, 
   SaveOutlined, CloseOutlined, MessageOutlined,
-  SettingOutlined
+  PlayCircleOutlined
 } from '@ant-design/icons';
 import api from '../api/api';
 
-const { Title, Text } = Typography;
-const { TextArea } = Input;
+const { Title } = Typography;
 const { Option } = Select;
 
 const MessageConfigList = () => {
@@ -22,6 +21,11 @@ const MessageConfigList = () => {
   const [formVisible, setFormVisible] = useState(false);
   const [currentConfig, setCurrentConfig] = useState(null);
   const [form] = Form.useForm();
+  
+  // Estados para modal de teste
+  const [testModalVisible, setTestModalVisible] = useState(false);
+  const [testRecord, setTestRecord] = useState(null);
+  const [testForm] = Form.useForm();
 
   useEffect(() => {
     fetchMessageConfigs();
@@ -91,6 +95,94 @@ const MessageConfigList = () => {
     setFormVisible(true);
   };
 
+  const handleTest = (record) => {
+    setTestRecord(record);
+    setTestModalVisible(true);
+    testForm.resetFields();
+  };
+
+  const submitTest = async (values) => {
+    const config = testRecord;
+    const contact = values.contact;
+    
+    if (config.channelType === 'email') {
+      try {
+        // Buscar template se existir
+        let templateData = null;
+        if (config.templateId) {
+          const template = templates.find(t => t.id === config.templateId);
+          if (template) {
+            templateData = template;
+          }
+        }
+
+        await api.post('/api/email/sendTest', {
+          ...templateData,
+          emailConfig: config.emailConfig,
+          test_email: contact,
+          email_subject: templateData?.email_subject || 'Teste de Configuração',
+          email_body: templateData?.email_body || config.messageTemplate || 'Mensagem de teste'
+        });
+        
+        notification.success({
+          message: 'Sucesso',
+          description: 'Email de teste adicionado a fila!',
+        });
+      } catch (err) {
+        notification.error({
+          message: 'Erro',
+          description: 'Falha ao enviar email: ' + 
+            (err?.response?.data?.error?.message || err?.message || 'Erro desconhecido'),
+        });
+      }
+    } else if (config.channelType === 'whatsapp') {
+      try {
+        let templateData = null;
+        if (config.templateId) {
+          const template = templates.find(t => t.id === config.templateId);
+          if (template) {
+            templateData = JSON.parse(JSON.stringify(template));
+        
+            if (templateData.components && Array.isArray(templateData.components)) {
+              templateData.components.forEach(component => {
+                if (component.parameters && Array.isArray(component.parameters)) {
+                  component.parameters.forEach(param => {
+                    if (param.type === 'contact') {
+                      param.type = 'text';
+                    }
+                  });
+                }
+              });
+            }
+          }
+        }
+
+        const whatsappData = {
+          ...templateData,
+          ...config.whatsappConfig,
+          phone_number: contact,
+          // Se não tiver template, usar mensagem simples
+          message: templateData ? undefined : (config.messageTemplate || 'Mensagem de teste')
+        };
+
+        await api.post('/api/whatsapp/sendFirstMessage', whatsappData);
+        
+        notification.success({
+          message: 'Sucesso',
+          description: 'Mensagem WhatsApp adicionada a fila!',
+        });
+      } catch (err) {
+        notification.error({
+          message: 'Erro',
+          description: 'Falha ao enviar mensagem: ' + 
+            (err?.response?.data?.error?.details?.error?.message || err?.message || 'Erro desconhecido'),
+        });
+      }
+    }
+    
+    setTestModalVisible(false);
+  };
+
   const handleDelete = async (id) => {
     try {
       await api.delete(`/api/messageConfig/${id}`);
@@ -110,7 +202,6 @@ const MessageConfigList = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      // Adicionar configurações específicas de canal
       const configData = { ...values };
       
       if (values.channelType === 'whatsapp') {
@@ -165,33 +256,7 @@ const MessageConfigList = () => {
     const channelType = form.getFieldValue('channelType');
     
     if (channelType === 'whatsapp') {
-      return (
-        <>
-          <Form.Item
-            name="whatsappApiKey"
-            label="API Key do WhatsApp"
-            rules={[{ 
-              required: true, 
-              message: 'Por favor, insira a API Key do WhatsApp' 
-            }]}
-          >
-            <TextArea 
-              placeholder="Chave de API do WhatsApp" 
-              autoSize={{ minRows: 2, maxRows: 4 }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="whatsappPhoneNumber"
-            label="Número de Telefone"
-            rules={[{ 
-              required: true, 
-              message: 'Por favor, insira o número de telefone' 
-            }]}
-          >
-            <Input placeholder="Número de telefone com código do país" />
-          </Form.Item>
-        </>
-      );
+      return null;
     } else if (channelType === 'email') {
       return (
         <>
@@ -323,6 +388,14 @@ const MessageConfigList = () => {
             ghost
           >
             Editar
+          </Button>
+          <Button
+            icon={<PlayCircleOutlined />}
+            onClick={() => handleTest(record)}
+            type="primary"
+            ghost
+          >
+            Testar
           </Button>
           <Popconfirm
             title="Tem certeza que deseja excluir esta configuração?"
@@ -470,28 +543,50 @@ const MessageConfigList = () => {
               </Select>
             </Form.Item>
 
-            <Form.Item
-              name="messageTemplate"
-              label="Mensagem Personalizada"
-              tooltip="Use apenas se não selecionar um template"
-            >
-              <TextArea 
-                rows={4} 
-                placeholder="Mensagem personalizada, caso não use um template" 
-              />
-            </Form.Item>
+            {renderChannelSpecificFields() != null &&
+              <>
+                <Divider orientation="left">Configurações Específicas do Canal</Divider>
 
-            <Divider orientation="left">Configurações Específicas do Canal</Divider>
-
-            <Form.Item
-              noStyle
-              shouldUpdate={(prevValues, currentValues) => 
-                prevValues.channelType !== currentValues.channelType
-              }
-            >
-              {() => renderChannelSpecificFields()}
-            </Form.Item>
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) => 
+                    prevValues.channelType !== currentValues.channelType
+                  }
+                >
+                  {() => renderChannelSpecificFields()}
+                </Form.Item>
+              </>
+            }
           </Card>
+        </Form>
+      </Modal>
+
+      {/* Modal de Teste */}
+      <Modal
+        title={`Testar Configuração (${testRecord?.channelType === 'email' ? 'E-mail' : 'WhatsApp'})`}
+        open={testModalVisible}
+        onCancel={() => setTestModalVisible(false)}
+        onOk={() => testForm.submit()}
+        okText="Enviar Teste"
+        cancelText="Cancelar"
+      >
+        <Form 
+          form={testForm} 
+          layout="vertical"
+          onFinish={submitTest}
+        >
+          <Form.Item
+            label={testRecord?.channelType === 'email' ? 'E-mail de Destino' : 'Telefone com DDD'}
+            name="contact"
+            rules={[
+              { required: true, message: testRecord?.channelType === 'email' ? 'Informe um e-mail válido.' : 'Informe um número de telefone válido.' },
+              testRecord?.channelType === 'email'
+                ? { type: 'email', message: 'E-mail inválido.' }
+                : { pattern: /^\d+$/, message: 'Somente números.' }
+            ]}
+          >
+            <Input placeholder={testRecord?.channelType === 'email' ? 'exemplo@email.com' : '5511999999999'} />
+          </Form.Item>
         </Form>
       </Modal>
     </div>
