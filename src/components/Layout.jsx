@@ -38,13 +38,13 @@ const AuthenticatedLayout = ({ children }) => {
       key: '/whatsapp',
       icon: <MessageOutlined />,
       label: <Link to="/whatsapp">Templates</Link>,
-      roles: ['admin']  // <-- Só Admin
+      roles: ['admin']
     },
     {
       key: '/messageConfig',
       icon: <SettingOutlined />,
       label: <Link to="/messageConfig">Configurar</Link>,
-      roles: ['admin']  // <-- Só Admin
+      roles: ['admin']
     },
     {
       key: '/messageHistory',
@@ -59,7 +59,8 @@ const AuthenticatedLayout = ({ children }) => {
     {
       key: '/userManagement',
       icon: <UserOutlined />,
-      label: <Link to="/userManagement">Gerenciar Usuarios</Link>
+      label: <Link to="/userManagement">Gerenciar Usuarios</Link>,
+      roles: ['admin']
     },
   ];
   
@@ -118,7 +119,6 @@ const AuthenticatedLayout = ({ children }) => {
             alignItems: 'center' 
           }}
         >
-          <div>{/* You can add page title or breadcrumbs here */}</div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Text style={{ marginRight: 12 }}>
               {user?.name || 'Usuário'}
